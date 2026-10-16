@@ -218,3 +218,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# RoboEvolutivo local secrets and clinical data
+data/
+.venv/
+credentials*.json
+*service-account*.json
+profissionais.txt
+config/pacientes.json
+DB/*
+!DB/README.md
+profissionais.exemplo.txt
