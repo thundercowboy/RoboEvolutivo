@@ -1,0 +1,37 @@
+{
+  "url": "https://tasy.unimedflorianopolis.com.br/#/login",
+  "validated": false,
+  "frames": {},
+  "selectors": {
+    "login": "role=textbox[name=\"Nome de usuário\"i]",
+    "password": "role=textbox[name=\"Senha\"i]",
+    "enter": "role=button[name=\"Entrar\"i]",
+    "user": "text={professional}",
+    "pep": "a:has-text(\"Prontuário Eletrônico\")",
+    "category": "#title_1_4",
+    "patient": "tree_text={patient}",
+    "notes": "text=\"Notas clínicas\"",
+    "patient_header": "w-person-bar >> text={patient_name}",
+    "attendance_header": "#NR_ATENDIMENTO >> text={attendance}",
+    "chart_header": "#NR_PRONTUARIO",
+    "add": "role=menuitem[name=\"Adicionar\"i]",
+    "date": "role=textbox[name=\"Data da nota clínica\"i]",
+    "professional": "[data-testid=\"CD_MEDICO\"] input[name=\"txDescription\"]",
+    "note_type": "role=combobox[name=\"Tipo de nota clínica\"i]",
+    "content": "div.wrichedit-editor[id^=\"DS_EVOLUCAO\"][role=\"textbox\"][contenteditable=\"true\"]:visible",
+    "save": "role=button[name=\"Salvar\"i]",
+    "release": "[id^=\"ngdialog\"]:visible >> role=button[name=\"Liberar\"s]",
+    "saved_note": ".slick-row:has(.slick-cell.l1 :text-is({attendance})):has(.slick-cell.l2:has-text({date})):has(.slick-cell.l3 :text-is({professional})):has(.slick-cell.l6 :text-is({note_type}))",
+    "saved_content": "div.wrichedit-editor[id^=\"DS_EVOLUCAO\"][role=\"textbox\"][contenteditable=\"false\"]:visible",
+    "close_pep": "#header >> role=button",
+    "note_option": "role=option[name={note_type}s]",
+    "user_menu": "text={professional}",
+    "logout": "text=/^\\s*sair\\s*$/i"
+  },
+  "mapping_references": {
+    "patient_example": "#title_1_4_2",
+    "patient_text_example": "CAUA DA SILVA DE ALMEIDA (",
+    "notes_screen_example": "< 1 / 0 > Notas clínicas >",
+    "user_menu_example": "ALBERTO DE OLIVEIRA CHIMELLI Estabelecimento: COOP PA - FILIAL CENTRO Perfil:"
+  }
+}

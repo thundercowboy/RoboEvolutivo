@@ -4,7 +4,7 @@ Aplicação Windows/Python com interface Tkinter para carregar respostas do Goog
 
 ## Instalação
 
-Para usar sem Python, extraia `dist/EvolucaoIntensihome-Windows.zip` e execute `EvolucaoIntensihome.exe` dentro da pasta extraída. Consulte `USAR_EM_OUTRO_PC.md`. O pacote inclui Chromium, cadastro de pacientes e histórico, mas não inclui chaves Google nem senhas. O antigo `profissionais.exemplo.txt` foi removido; o cadastro utilizado é `DB/profissionais.txt`.
+Para usar sem Python, copie a pasta `dist/EvolucaoIntensihome` inteira e execute `EvolucaoIntensihome.exe`. Existe uma única distribuição final; ZIPs e versões anteriores foram removidos. Consulte `USAR_EM_OUTRO_PC.md`. O pacote inclui Chromium, cadastro de pacientes e histórico, mas não inclui chaves Google nem senhas. O antigo `profissionais.exemplo.txt` foi removido; o cadastro utilizado é `DB/profissionais.txt`.
 
 Para gerar novamente o pacote no computador de desenvolvimento, instale `requirements-build.txt` e execute `.\.venv\Scripts\python.exe build_windows.py`. O ícone é mantido em `assets/robot.ico`.
 

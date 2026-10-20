@@ -25,7 +25,7 @@ class InterfaceTest(unittest.TestCase):
         self.window.selection_anchor = None
         self.window.column_filters.clear()
         self.window.row_states.clear()
-        self.window.records = [Record(f'test-{n}', 'Paciente fictício', '15/10/2026 09:05:00', 'fisioterapeuta', f'Texto fictício {n}', 'Autor fictício', '') for n in range(6)]
+        self.window.records = [Record(f'test-{n}', 'Paciente fictício', '15/10/2026 09:05:00', 'enfermeiro', f'Texto fictício {n}', 'Autor fictício', '') for n in range(6)]
         for r in self.window.records:
             self.window.tree.insert('', 'end', iid=r.key, values=(r.patient, r.date[:-3], r.function, r.author, 'Pendente'))
         self.window.update()
@@ -61,6 +61,9 @@ class InterfaceTest(unittest.TestCase):
         self.assertEqual(self.window.tree.selection(), ('test-1', 'test-2'))
 
     def test_theme_checkbox_is_right_of_sheet_and_light_at_start(self):
+        self.assertNotIn('fisioterapeuta', self.window.selected)
+        self.assertIn('fonoaudiologo', self.window.selected)
+        self.assertIn('terapeuta ocupacional', self.window.selected)
         self.assertFalse(self.window.dark_mode)
         info = self.window.theme_checkbox.grid_info()
         self.assertEqual((info['row'], info['column']), (0, 2))
@@ -116,8 +119,8 @@ class InterfaceTest(unittest.TestCase):
     def test_real_launch_automatically_saves_two_selected_rows_and_reports_count(self):
         window = self.window
         window.settings = {'Planilha': 'https://docs.google.com/spreadsheets/d/ficticio/edit', 'Credenciais Google': 'ficticio.json'}
-        window.professionals = {'fisioterapeuta': {'name': 'Responsável fictício', 'login': 'ficticio'}}
-        window.professionals['fonoaudiologo'] = dict(window.professionals['fisioterapeuta'])
+        window.professionals = {'enfermeiro': {'name': 'Responsável fictício', 'login': 'ficticio'}}
+        window.professionals['fonoaudiologo'] = dict(window.professionals['enfermeiro'])
         window.records[1].function = 'fonoaudiologo'
         window.tree.selection_set('test-0', 'test-1')
         robot, sheet, ledger = Mock(), Mock(), Mock()
@@ -144,7 +147,7 @@ class InterfaceTest(unittest.TestCase):
     def test_uncertain_record_is_not_repeated_and_completion_explains_skip(self):
         window = self.window
         window.settings = {'Planilha': 'https://docs.google.com/spreadsheets/d/ficticio/edit', 'Credenciais Google': 'ficticio.json'}
-        window.professionals = {'fisioterapeuta': {'name': 'Responsável fictício', 'login': 'ficticio'}}
+        window.professionals = {'enfermeiro': {'name': 'Responsável fictício', 'login': 'ficticio'}}
         window.tree.selection_set('test-0', 'test-1')
         robot, sheet, ledger = Mock(), Mock(), Mock()
         ledger.get.side_effect = lambda key: 'Conferir' if key.endswith(':test-0') else ''

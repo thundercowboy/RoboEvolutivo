@@ -69,7 +69,7 @@ class Application(tk.Tk):
         functions = ttk.LabelFrame(self, text='Profissões a importar', padding=8)
         functions.pack(fill='x', padx=12)
         self.selected = {}
-        for n, function in enumerate(TYPES):
+        for n, function in enumerate(f for f in TYPES if f != 'fisioterapeuta'):
             var = tk.BooleanVar(value=True)
             self.selected[function] = var
             ttk.Checkbutton(functions, text=function.title(), variable=var).grid(row=n // 3, column=n % 3, sticky='w', padx=15)
