@@ -11,3 +11,9 @@ O cadastro de pacientes e uma cópia do histórico SQLite acompanham o pacote. N
 Internet e acesso ao Tasy são necessários. O aplicativo não altera a instalação do computador e não solicita administrador. Não coloque a pasta em Arquivos de Programas.
 
 Para atualizar o executável, preserve DB, config e data do computador em uso. Não substitua essas pastas por cópias antigas do pacote.
+
+Após conferir manualmente uma nota salva e liberada no Tasy, selecione sua linha e use Confirmar Registro. Confirme os itens exibidos para marcar Importado? como Sim na planilha e preservar o bloqueio no SQLite, sem lançar novamente. A confirmação aceita várias linhas selecionadas.
+
+Na seta da coluna Data, informe De e Até em DD/MM/AAAA, com horário HH:mm opcional. A data final sem horário inclui o dia inteiro; um limite vazio não restringe esse lado do período.
+
+Use o botão Calendário ao lado de De ou Até para selecionar o dia com um clique. As setas mudam o mês e o botão Hoje seleciona a data atual. Um horário já digitado é mantido ao trocar a data.

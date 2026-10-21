@@ -24,6 +24,8 @@ class InterfaceTest(unittest.TestCase):
         self.window.tree.delete(*self.window.tree.get_children())
         self.window.selection_anchor = None
         self.window.column_filters.clear()
+        self.window.date_period = (None, None)
+        self.window.date_period_labels = ('', '')
         self.window.row_states.clear()
         self.window.records = [Record(f'test-{n}', 'Paciente fictício', '15/10/2026 09:05:00', 'enfermeiro', f'Texto fictício {n}', 'Autor fictício', '') for n in range(6)]
         for r in self.window.records:
@@ -47,6 +49,33 @@ class InterfaceTest(unittest.TestCase):
         self.assertEqual(self.window.content.get('1.0', 'end').strip(), 'Texto fictício 4')
         self.click('test-2', shift=True)
         self.assertEqual(self.window.tree.selection(), ('test-1', 'test-2'))
+
+    def test_date_popup_filters_period_and_removes_hidden_selection(self):
+        from tkinter import ttk
+        self.window.records[0].date = '14/10/2026 23:59:00'
+        self.window.records[1].date = '16/10/2026 00:00:00'
+        self.window.tree.selection_set('test-0', 'test-2')
+        self.window.open_filter('date')
+        dialog = next(w for w in self.window.winfo_children() if w.winfo_class() == 'Toplevel')
+        def descendants(widget):
+            for child in widget.winfo_children():
+                yield child
+                yield from descendants(child)
+        entries = [w for w in descendants(dialog) if isinstance(w, ttk.Entry)]
+        entries[0].insert(0, '15/10/2026')
+        entries[1].insert(0, '15/10/2026')
+        next(w for w in descendants(dialog) if isinstance(w, ttk.Button) and w.cget('text') == 'Aplicar').invoke()
+        self.assertEqual(self.window.tree.get_children(), ('test-2', 'test-3', 'test-4', 'test-5'))
+        self.assertEqual(self.window.tree.selection(), ('test-2',))
+        self.window.clear_filters()
+        self.assertEqual(len(self.window.tree.get_children()), 6)
+
+    def test_manual_confirmation_requires_user_attestation(self):
+        self.window.tree.selection_set('test-0')
+        with patch('main.messagebox.askyesno', return_value=False) as question, patch.object(self.window, 'launch') as launch:
+            self.window.confirm_selected()
+        question.assert_called_once()
+        launch.assert_not_called()
 
     def test_shift_arrows_expand_and_contract_from_same_anchor(self):
         self.click('test-1')

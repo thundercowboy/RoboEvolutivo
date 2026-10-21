@@ -12,6 +12,9 @@ from app.tasy import Tasy
 from app.storage import ROOT, PROFESSIONALS, SHEET_TAB, prepare_storage, ledger_path
 from app.theme import apply_theme
 from app.importing import ordered_imports
+from app.filtering import date_period, within_period
+from app.manual_confirmation import confirm_records
+from app.calendar_picker import DateCalendar
 
 DATA = ROOT / 'data'
 DATA.mkdir(exist_ok=True)
@@ -38,6 +41,8 @@ class Application(tk.Tk):
         self.professionals = {}
         self.skipped_details = []
         self.column_filters = {}
+        self.date_period = (None, None)
+        self.date_period_labels = ('', '')
         self.row_states = {}
         self.column_labels = dict(zip(('patient', 'date', 'function', 'author', 'status'), ('Paciente', 'Data', 'Profissão', 'Autor / Conselho', 'Estado')))
         self.settings = {}
@@ -79,6 +84,8 @@ class Application(tk.Tk):
         self.connect_button.pack(side='left')
         self.import_button = ttk.Button(actions, text='Importar linhas selecionadas', command=self.run, state='disabled')
         self.import_button.pack(side='left', padx=8)
+        self.confirm_button = ttk.Button(actions, text='Confirmar Registro', command=self.confirm_selected, state='disabled')
+        self.confirm_button.pack(side='left', padx=8)
         self.clear_filters_button = ttk.Button(actions, text='Limpar filtros', command=self.clear_filters, state='disabled')
         self.clear_filters_button.pack(side='left', padx=8)
         self.visible_count = tk.StringVar(value='0 linhas')
@@ -131,7 +138,7 @@ class Application(tk.Tk):
         visible = []
         for record in self.records:
             values = self.record_values(record)
-            if all(values[column] in allowed for column, allowed in self.column_filters.items()):
+            if all(values[column] in allowed for column, allowed in self.column_filters.items()) and within_period(record.date, self.date_period):
                 self.tree.insert('', 'end', iid=record.key, values=tuple(values.values()))
                 visible.append(record.key)
         self.tree.selection_set([key for key in visible if key in selected])
@@ -141,17 +148,23 @@ class Application(tk.Tk):
             self.selection_anchor = None
         self.visible_count.set(f'{len(visible)} de {len(self.records)} linhas')
         for key, label in self.column_labels.items():
-            self.tree.heading(key, text=label + (' ● ▾' if key in self.column_filters else ' ▾'))
-        self.clear_filters_button.configure(state='normal' if self.column_filters and not self.busy else 'disabled')
+            active = key in self.column_filters or (key == 'date' and any(self.date_period))
+            self.tree.heading(key, text=label + (' ● ▾' if active else ' ▾'))
+        self.clear_filters_button.configure(state='normal' if (self.column_filters or any(self.date_period)) and not self.busy else 'disabled')
         self.preview()
 
     def clear_filters(self):
         if not self.busy:
             self.column_filters.clear()
+            self.date_period = (None, None)
+            self.date_period_labels = ('', '')
             self.render_records()
 
     def open_filter(self, column):
         if self.busy:
+            return
+        if column == 'date':
+            self.open_date_filter()
             return
         dialog = tk.Toplevel(self)
         dialog.title('Filtrar: ' + self.column_labels[column])
@@ -220,6 +233,78 @@ class Application(tk.Tk):
         refresh()
         apply_theme(self, self.dark_mode)
         entry.focus_set()
+
+    def open_date_filter(self):
+        dialog = tk.Toplevel(self)
+        dialog.title('Filtrar: Data por período')
+        dialog.transient(self)
+        dialog.grab_set()
+        frame = ttk.Frame(dialog, padding=16)
+        frame.pack(fill='both', expand=True)
+        ttk.Label(frame, text='DD/MM/AAAA ou DD/MM/AAAA HH:mm. Deixe em branco para não limitar.').pack(anchor='w')
+        entries = []
+        for label, value in zip(('De:', 'Até:'), self.date_period_labels):
+            ttk.Label(frame, text=label).pack(anchor='w', pady=(10, 0))
+            var = tk.StringVar(value=value)
+            row = ttk.Frame(frame)
+            row.pack(fill='x')
+            ttk.Entry(row, textvariable=var, width=32).pack(side='left', fill='x', expand=True)
+            def show_calendar(variable=var):
+                DateCalendar(dialog, variable)
+                apply_theme(self, self.dark_mode)
+            ttk.Button(row, text='Calendário', command=show_calendar).pack(side='left', padx=(8, 0))
+            entries.append(var)
+        ttk.Label(frame, text='Sem horário, a data final inclui o dia inteiro.').pack(anchor='w', pady=10)
+        def apply():
+            labels = tuple(var.get().strip() for var in entries)
+            try:
+                period = date_period(*labels)
+            except ValueError as error:
+                messagebox.showerror('Período inválido', str(error), parent=dialog)
+                return
+            self.date_period, self.date_period_labels = period, labels
+            self.column_filters.pop('date', None)
+            self.render_records()
+            dialog.destroy()
+        def clear():
+            self.date_period, self.date_period_labels = (None, None), ('', '')
+            self.column_filters.pop('date', None)
+            self.render_records()
+            dialog.destroy()
+        buttons = ttk.Frame(frame)
+        buttons.pack(fill='x', pady=8)
+        ttk.Button(buttons, text='Aplicar', command=apply).pack(side='left')
+        ttk.Button(buttons, text='Limpar coluna', command=clear).pack(side='left', padx=8)
+        ttk.Button(buttons, text='Cancelar', command=dialog.destroy).pack(side='right')
+        apply_theme(self, self.dark_mode)
+
+    def confirm_selected(self):
+        if self.busy:
+            return
+        keys = set(self.tree.selection())
+        records = [record for record in self.records if record.key in keys]
+        if not records:
+            messagebox.showinfo('Seleção', 'Selecione as linhas conferidas no Tasy.')
+            return
+        detail = '\n'.join(f'{r.patient} — {r.date[:-3]} — {r.function}' for r in records[:10])
+        if len(records) > 10:
+            detail += f'\n... e mais {len(records) - 10} linha(s).'
+        if not messagebox.askyesno('Confirmar Registro',
+                f'Você verificou no Tasy que TODAS as {len(records)} notas selecionadas estão salvas e liberadas?\n\n'
+                + detail + '\n\nConfirmar marcará Sim no SQLite e em Importado? no Sheets. Nenhuma nota será lançada no Tasy.'):
+            return
+        settings = dict(self.settings)
+        def task():
+            sheets = Sheets(settings['Credenciais Google'], settings['Planilha'], SHEET_TAB)
+            ledger = Ledger(ledger_path())
+            try:
+                prefix = settings['Planilha'].split('/d/')[1].split('/')[0] + ':'
+                count = confirm_records(records, sheets, ledger, prefix,
+                                        lambda key, state: self.events.put(('status', (key, state))))
+                self.events.put(('manual_completed', count))
+            finally:
+                ledger.db.close()
+        self.launch(task)
 
     def anchor_selection(self, event):
         row = self.tree.identify_row(event.y)
@@ -328,6 +413,7 @@ class Application(tk.Tk):
         self.busy = True
         self.connect_button.configure(state='disabled')
         self.import_button.configure(state='disabled')
+        self.confirm_button.configure(state='disabled')
         self.patients_button.configure(state='disabled')
         self.clear_filters_button.configure(state='disabled')
         def worker():
@@ -442,6 +528,8 @@ class Application(tk.Tk):
                 self.settings, self.professionals, self.records = value
                 self.row_states.clear()
                 self.column_filters.clear()
+                self.date_period = (None, None)
+                self.date_period_labels = ('', '')
                 self.selection_anchor = None
                 self.render_records()
                 self.status.set(f'Conectado. {len(self.records)} respostas carregadas. Selecione as linhas para execução.')
@@ -460,6 +548,10 @@ class Application(tk.Tk):
                 self.status.set(value)
             elif event == 'skipped_reason':
                 self.skipped_details.append(value)
+            elif event == 'manual_completed':
+                text = f'{value} registro(s) confirmado(s). Importado? atualizado para Sim.'
+                self.status.set(text)
+                messagebox.showinfo('Confirmação concluída', text)
             elif event == 'run_completed':
                 imported, skipped, interrupted = value
                 title = 'Importação interrompida' if interrupted else 'Importação concluída'
@@ -472,8 +564,9 @@ class Application(tk.Tk):
                 self.busy = False
                 self.connect_button.configure(state='normal')
                 self.import_button.configure(state='normal' if self.records else 'disabled')
+                self.confirm_button.configure(state='normal' if self.records else 'disabled')
                 self.patients_button.configure(state='normal')
-                self.clear_filters_button.configure(state='normal' if self.column_filters else 'disabled')
+                self.clear_filters_button.configure(state='normal' if self.column_filters or any(self.date_period) else 'disabled')
         self.after(100, self.poll)
 
     def exit(self):

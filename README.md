@@ -65,6 +65,12 @@ Em `config/pacientes.json`, cadastre nomes com identificadores confirmados, por 
 
 ## Uso e recuperação
 
+**Confirmar Registro** permite selecionar uma ou várias linhas após verificar manualmente no Tasy que as notas estão salvas e liberadas. A aplicação pede confirmação dos itens, confere suas identidades na planilha e grava `Sim` no SQLite e no campo `Importado?`, sem abrir o Tasy ou criar novas notas. A tabela `manual_confirmations` registra identificador, horário e usuário Windows da confirmação. Se o Sheets falhar, o bloqueio local é preservado; reconecte e repita a confirmação para atualizar a planilha.
+
+O filtro da coluna Data usa **De** e **Até**, no formato `DD/MM/AAAA` ou `DD/MM/AAAA HH:mm`. Limites vazios ficam abertos e a data final sem horário inclui o dia inteiro. O período combina com os demais filtros; linhas ocultas saem da seleção. **Limpar filtros** remove também o período.
+
+Os botões **Calendário** de De e Até abrem seletores de dia clicáveis, com navegação de mês e botão Hoje. A escolha preserva o horário opcional já digitado. Também é possível preencher os campos pelo teclado.
+
 Clique na seta **▾** do cabeçalho de Paciente, Data, Profissão, Autor / Conselho ou Estado para filtrar essa coluna. Busque um valor, marque/desmarque opções ou clique **Somente exibidos** para selecionar apenas os resultados da busca; finalize com **Aplicar**. Filtros de várias colunas são combinados. **Limpar coluna** remove um filtro; **Limpar filtros** restaura a tabela completa. Uma coluna filtrada recebe o indicador ● e o contador mostra linhas visíveis e total. Linhas ocultadas deixam de estar selecionadas, portanto não entram em uma nova importação. Filtros não alteram a planilha e ficam indisponíveis durante uma execução.
 
 Selecione profissões e linhas, revise o texto e clique **Importar linhas selecionadas**. Para marcar um intervalo, clique na primeira linha e use **Shift + clique** na última, ou mantenha **Shift** pressionado enquanto usa as setas **para baixo / para cima**. O intervalo pode ser ampliado ou reduzido a partir da mesma primeira linha. Ctrl + clique mantém a seleção individual do controle. A descrição acompanha a linha em foco. A importação salva e libera automaticamente as respostas selecionadas e mostra as quantidades importada e ignorada ao terminar. A aplicação interrompe o lote ao primeiro erro. Reinicie e recarregue antes de repetir após correção.
